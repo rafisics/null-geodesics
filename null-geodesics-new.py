@@ -2,9 +2,8 @@
 # Importing libraries
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 import pytearcat as pt
-
 
 # %%
 # Define coordinates and metric
@@ -14,7 +13,6 @@ Phi = pt.fun('Phi', 'x,y,z')
 ds2 = 'ds2 = a**2*(-(1 + 2*Phi)*dtau**2 + (1 - 2*Phi)*(dx**2 + dy**2 + dz**2))'
 g = pt.metric(ds2)
 Chr = pt.christoffel(First_kind=False)
-
 
 # %%
 # Define potential and derivatives
@@ -26,16 +24,18 @@ def phi(x, y, z):
 
 def dphi_dx(x, y, z):
     r = np.sqrt(x**2 + y**2 + z**2)
-    return m * x / r**3 if r > 1e-10 else 0
+    val = m * x / r**3 if r > 1e-10 else 0
+    return np.clip(val, -1, 1)  # Clip to prevent numerical issues
 
 def dphi_dy(x, y, z):
     r = np.sqrt(x**2 + y**2 + z**2)
-    return m * y / r**3 if r > 1e-10 else 0
+    val = m * y / r**3 if r > 1e-10 else 0
+    return np.clip(val, -1, 1)
 
 def dphi_dz(x, y, z):
     r = np.sqrt(x**2 + y**2 + z**2)
-    return m * z / r**3 if r > 1e-10 else 0
-
+    val = m * z / r**3 if r > 1e-10 else 0
+    return np.clip(val, -1, 1)
 
 # %%
 # Set initial conditions
@@ -43,8 +43,8 @@ beta = np.pi / 2
 alpha = 0.0
 tau0 = 0.0
 x0 = 50.0
-y0 = 5.0
-z0 = 5.0
+y0 = 1.0  # Reduced for stronger lensing
+z0 = 1.0  # Reduced for stronger lensing
 a0 = 1.0
 
 phi0 = phi(x0, y0, z0)
@@ -60,17 +60,15 @@ kz_0 = np.cos(beta) / np.sqrt(np.abs(g33_0))
 
 h0 = [tau0, ktau_0, x0, kx_0, y0, ky_0, z0, kz_0, a0]
 
-
 # %%
 # Cosmological parameters
 wm = 0.3
 wd = 0.7
 H0 = 0.070894407 * 3.26 / (1000 * 0.67556)
 
-
 # %%
 # Define the geodesic function
-def geodesic(h, l):
+def geodesic(l, h):
     tau, ktau, x, kx, y, ky, z, kz, a = h
 
     dadtau = H0 * a**2 * np.sqrt(wm / a**3 + wd)
@@ -81,6 +79,10 @@ def geodesic(h, l):
 
     den1 = 1.0 + 2.0 * phi_val
     den2 = 1.0 - 2.0 * phi_val
+
+    # Debug: Check for potential numerical issues
+    if den1 < 0 or den2 < 0 or abs(phi_val) > 0.1:
+        print(f"Warning at λ={l}: |Phi|={abs(phi_val):.2e}, den1={den1:.2e}, den2={den2:.2e}")
 
     gamma_000 = dadtau / a
     gamma_001 = dphi_dx_val / den1
@@ -143,24 +145,14 @@ def geodesic(h, l):
     ]
     return dhdl
 
-
 # %%
 # Affine parameter
-l = np.linspace(0, -1000, 20000)  # High resolution
+l = np.linspace(0, -500, 20000)  # Reduced range for stability
 
 # Integrate
-sol = odeint(geodesic, h0, l, rtol=1e-13, atol=1e-15)
+sol = solve_ivp(geodesic, [0, -500], h0, method='LSODA', rtol=1e-13, atol=1e-15, t_eval=l, max_step=0.05)
 
-tau = sol[:, 0]
-ktau = sol[:, 1]
-x = sol[:, 2]
-kx = sol[:, 3]
-y = sol[:, 4]
-ky = sol[:, 5]
-z = sol[:, 6]
-kz = sol[:, 7]
-a = sol[:, 8]
-
+tau, ktau, x, kx, y, ky, z, kz, a = sol.y
 
 # %%
 # Compute metric components
@@ -173,18 +165,23 @@ g33 = a**2 * (1 - 2 * phi_vals)
 # Null condition
 null_condition = g00 * ktau**2 + g11 * kx**2 + g22 * ky**2 + g33 * kz**2
 
-
 # %%
-# Diagnostic: Check null condition and potential
-print("Max |null_condition|:", np.max(np.abs(null_condition)))
-print("Mean |null_condition|:", np.mean(np.abs(null_condition)))
-print("Max |Phi|:", np.max(np.abs(phi_vals)))
-print("Min r:", np.min(np.sqrt(x**2 + y**2 + z**2)))
-
 # Energy and redshift
 E = ktau
-redshift = (E * a) - 1
+redshift = (E * a) / (ktau[0] * a[0]) - 1  # Normalized redshift
 
+# %%
+# Deflection angle (in XY plane)
+initial_angle = np.arctan2(ky[0], kx[0]) * 180 / np.pi  # degrees
+final_angle = np.arctan2(ky[-1], kx[-1]) * 180 / np.pi  # degrees
+deflection_angle = final_angle - initial_angle
+deflection_vs_lambda = np.arctan2(ky, kx) * 180 / np.pi - initial_angle
+
+# %%
+# Reference straight-line trajectory (no lensing, for comparison)
+x_straight = x0 + l * kx_0 * np.sqrt(np.abs(g11_0))  # Approximate straight path
+y_straight = y0 + l * ky_0 * np.sqrt(np.abs(g22_0))
+z_straight = z0 + l * kz_0 * np.sqrt(np.abs(g33_0))
 
 # %%
 # Diagnostic: Plot k^τ
@@ -197,7 +194,6 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-
 # %%
 # Diagnostic: Plot scale factor
 plt.figure(figsize=(10, 6))
@@ -208,7 +204,6 @@ plt.title('Scale Factor vs Affine Parameter')
 plt.legend()
 plt.grid(True)
 plt.show()
-
 
 # %%
 # Diagnostic: Plot gravitational potential
@@ -221,24 +216,23 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-
 # %%
 # 3D trajectory plot
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 ax.plot(x, y, z, color='blue', label='Photon Path')
+ax.plot(x_straight, y_straight, z_straight, color='green', linestyle='--', label='Straight Path (No Lensing)')
 ax.scatter([0], [0], [0], color='red', s=100, label='Central Mass')
 ax.set_xlabel('x (Mpc)')
 ax.set_ylabel('y (Mpc)')
 ax.set_zlabel('z (Mpc)')
-ax.set_xlim([-50, 60])
-ax.set_ylim([-10, 10])
-ax.set_zlim([-10, 10])
+ax.set_xlim([-5, 5])
+ax.set_ylim([-2, 2])
+ax.set_zlim([-2, 2])
 ax.set_title('3D Photon Trajectory')
 ax.legend()
 ax.grid(True)
 plt.show()
-
 
 # %%
 # Null condition plot
@@ -252,7 +246,6 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-
 # %%
 # Redshift plot
 plt.figure(figsize=(10, 6))
@@ -264,11 +257,22 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
+# %%
+# Deflection angle vs λ
+plt.figure(figsize=(10, 6))
+plt.plot(l, deflection_vs_lambda, 'k-', label='Deflection Angle')
+plt.xlabel('Affine Parameter λ')
+plt.ylabel('Deflection Angle (degrees)')
+plt.title('Deflection Angle vs Affine Parameter')
+plt.legend()
+plt.grid(True)
+plt.show()
 
 # %%
 # XY plane trajectory
 plt.figure(figsize=(8, 8))
 plt.plot(x, y, color='blue', label='Photon Path')
+plt.plot(x_straight, y_straight, color='green', linestyle='--', label='Straight Path (No Lensing)')
 plt.scatter([0], [0], color='red', s=100, label='Central Mass')
 plt.xlabel('x (Mpc)')
 plt.ylabel('y (Mpc)')
@@ -276,15 +280,15 @@ plt.title('Photon Trajectory in XY Plane')
 plt.legend()
 plt.grid(True)
 plt.axis('equal')
-plt.xlim(-50, 60)
-plt.ylim(-10, 10)
+plt.xlim(-5, 5)
+plt.ylim(-2, 2)
 plt.show()
-
 
 # %%
 # XZ plane trajectory
 plt.figure(figsize=(8, 8))
 plt.plot(x, z, color='blue', label='Photon Path')
+plt.plot(x_straight, z_straight, color='green', linestyle='--', label='Straight Path (No Lensing)')
 plt.scatter([0], [0], color='red', s=100, label='Central Mass')
 plt.xlabel('x (Mpc)')
 plt.ylabel('z (Mpc)')
@@ -292,8 +296,25 @@ plt.title('Photon Trajectory in XZ Plane')
 plt.legend()
 plt.grid(True)
 plt.axis('equal')
-plt.xlim(-50, 60)
-plt.ylim(-10, 10)
+plt.xlim(-5, 5)
+plt.ylim(-2, 2)
 plt.show()
 
-
+# %%
+# Diagnostics section
+print("=== NULL GEODESIC DIAGNOSTICS ===")
+print(f"Initial null condition: {null_condition[0]:.2e}")
+print(f"Final null condition: {null_condition[-1]:.2e}")
+print(f"Average null condition: {np.nanmean(null_condition):.2e}")
+print(f"Minimum absolute null condition: {np.min(np.abs(null_condition)[np.abs(null_condition) > 1e-100]):.2e}")
+print(f"Maximum absolute null condition: {np.nanmax(np.abs(null_condition)):.2e}")
+print(f"Standard deviation of null condition: {np.nanstd(null_condition):.2e}")
+print(f"Maximum absolute potential |Phi|: {np.nanmax(np.abs(phi_vals)):.6f}")
+print(f"Initial redshift: {redshift[0]:.6f}")
+print(f"Final redshift: {redshift[-1]:.6f}")
+print(f"Scale factor change: {sol.y[8][0]:.6f} → {sol.y[8][-1]:.6f}")
+print(f"Time coordinate change: {sol.y[0][0]:.2f} → {sol.y[0][-1]:.2f}")
+print(f"Minimum distance to origin: {np.min(np.sqrt(x**2 + y**2 + z**2)):.6f}")
+print(f"Deflection angle (degrees): {deflection_angle:.6f}")
+print(f"Integration steps taken: {sol.nfev}")
+print(f"Integration status: {sol.message}")
