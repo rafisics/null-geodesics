@@ -186,13 +186,13 @@ def geodesic(h, u):
 # %% [markdown]
 # $$ \frac{dh}{d\lambda} = \left\{ \begin{aligned}
 #   & \frac{d\tau}{d\lambda} = k^\tau  \\
-#   & \frac{d^2\tau}{d\lambda^2} = \frac{dk^\tau}{d\lambda} = -\left[ \Gamma^0_{00} (k^\tau)^2 + \Gamma^0_{01} k^tk^x + \Gamma^0_{02} k^tk^y + \Gamma^0_{03} k^tk^z + \Gamma^0_{11} (k^x)^2 + \Gamma^0_{22} (k^y)^2 + \Gamma^0_{33} (k^z)^2\right] \\
+#   & \frac{d^2\tau}{d\lambda^2} = \frac{dk^\tau}{d\lambda} = -\left[ \Gamma^0_{00} (k^\tau)^2 + 2\Gamma^0_{01} k^tk^x + 2\Gamma^0_{02} k^tk^y + 2\Gamma^0_{03} k^tk^z + \Gamma^0_{11} (k^x)^2 + \Gamma^0_{22} (k^y)^2 + \Gamma^0_{33} (k^z)^2\right] \\
 #   & \frac{dx}{d\lambda} = k^x \\
-#   & \frac{d^2x}{d\lambda^2} = \frac{dk^x}{d\lambda} = -\left[ \Gamma^1_{00} (k^\tau)^2 + \Gamma^1_{10} k^xk^t + \Gamma^1_{12} k^xk^y + \Gamma^1_{13} k^xk^z + \Gamma^1_{11} (k^x)^2 + \Gamma^1_{22} (k^y)^2 + \Gamma^1_{33} (k^z)^2\right] \\
+#   & \frac{d^2x}{d\lambda^2} = \frac{dk^x}{d\lambda} = -\left[ \Gamma^1_{00} (k^\tau)^2 + 2\Gamma^1_{10} k^xk^t + 2\Gamma^1_{12} k^xk^y + 2\Gamma^1_{13} k^xk^z + \Gamma^1_{11} (k^x)^2 + \Gamma^1_{22} (k^y)^2 + \Gamma^1_{33} (k^z)^2\right] \\
 #   & \frac{dy}{d\lambda} = k^y \\
-#   & \frac{d^2y}{d\lambda^2} = \frac{dk^y}{d\lambda} = -\left[ \Gamma^2_{00} (k^\tau)^2 + \Gamma^2_{20} k^yk^t + \Gamma^2_{21} k^yk^x + \Gamma^2_{23} k^yk^z + \Gamma^2_{11} (k^x)^2 + \Gamma^2_{22} (k^y)^2 + \Gamma^2_{33} (k^z)^2\right] \\
+#   & \frac{d^2y}{d\lambda^2} = \frac{dk^y}{d\lambda} = -\left[ \Gamma^2_{00} (k^\tau)^2 + 2\Gamma^2_{20} k^yk^t + 2\Gamma^2_{21} k^yk^x + 2\Gamma^2_{23} k^yk^z + \Gamma^2_{11} (k^x)^2 + \Gamma^2_{22} (k^y)^2 + \Gamma^2_{33} (k^z)^2\right] \\
 #   & \frac{dz}{d\lambda} = k^z \\
-#   & \frac{d^2z}{d\lambda^2} = \frac{dk^z}{d\lambda} = -\left[ \Gamma^2_{00} (k^\tau)^2 + \Gamma^2_{20} k^yk^t + \Gamma^2_{21} k^yk^x + \Gamma^2_{23} k^yk^z + \Gamma^2_{11} (k^x)^2 + \Gamma^2_{22} (k^y)^2 + \Gamma^2_{33} (k^z)^2\right] \\
+#   & \frac{d^2z}{d\lambda^2} = \frac{dk^z}{d\lambda} = -\left[ \Gamma^3_{00} (k^\tau)^2 + 2\Gamma^3_{30} k^zk^t + 2\Gamma^3_{31} k^zk^x + 2\Gamma^3_{32} k^zk^y + \Gamma^3_{11} (k^x)^2 + \Gamma^3_{22} (k^y)^2 + \Gamma^3_{33} (k^z)^2\right] \\
 #   & \frac{da}{d\lambda} = k^\tau H_0 a^2 \sqrt{\Omega_m a^{-3}+\Omega_\Lambda}
 # \end{aligned}
 # \right. $$
@@ -276,5 +276,3 @@ plt.xlabel('X')
 plt.ylabel('Z')
 plt.title('The trajectory of photon along XZ plane (initially projected in X-direction)')
 plt.show()
-
-
