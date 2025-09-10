@@ -12,7 +12,12 @@ a = pt.fun('a', 'tau')
 Phi = pt.fun('Phi', 'x,y,z')
 ds2 = 'ds2 = a**2*(-(1 + 2*Phi)*dtau**2 + (1 - 2*Phi)*(dx**2 + dy**2 + dz**2))'
 g = pt.metric(ds2)
-Chr = pt.christoffel(First_kind=False)
+
+# %%
+# To calculate the second kind without the first kind: 
+Chr = pt.christoffel(First_kind = False)  
+# To display only a particular combination of indices, e.g., the Second kind: 
+Chr.display("^,_,_")
 
 # %%
 # Define potential and derivatives
@@ -147,7 +152,7 @@ def geodesic(l, h):
 
 # %%
 # Affine parameter
-l = np.linspace(0, -500, 20000)  # Reduced range for stability
+l = np.linspace(0, -500, 60000)  # Increased resolution for smoother plots
 
 # Integrate
 sol = solve_ivp(geodesic, [0, -500], h0, method='LSODA', rtol=1e-13, atol=1e-15, t_eval=l, max_step=0.05)
@@ -162,8 +167,12 @@ g11 = a**2 * (1 - 2 * phi_vals)
 g22 = a**2 * (1 - 2 * phi_vals)
 g33 = a**2 * (1 - 2 * phi_vals)
 
-# Null condition
+# Null condition with underflow protection
 null_condition = g00 * ktau**2 + g11 * kx**2 + g22 * ky**2 + g33 * kz**2
+if np.any(null_condition < 0):
+    neg_indices = np.where(null_condition < 0)[0]
+    print(f"Warning: Negative null condition detected at {len(neg_indices)} points, e.g., λ={l[neg_indices[:5]]}")
+
 
 # %%
 # Energy and redshift
@@ -185,58 +194,65 @@ z_straight = z0 + l * kz_0 * np.sqrt(np.abs(g33_0))
 
 # %%
 # Diagnostic: Plot k^τ
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.plot(l, ktau, 'b-', label='k^τ')
 plt.xlabel('Affine Parameter λ')
 plt.ylabel('k^τ')
 plt.title('k^τ vs Affine Parameter')
 plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 # %%
 # Diagnostic: Plot scale factor
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.plot(l, a, 'm-', label='Scale Factor a')
 plt.xlabel('Affine Parameter λ')
 plt.ylabel('Scale Factor a')
 plt.title('Scale Factor vs Affine Parameter')
 plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 # %%
 # Diagnostic: Plot gravitational potential
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.plot(l, phi_vals, 'c-', label='Φ')
 plt.xlabel('Affine Parameter λ')
 plt.ylabel('Gravitational Potential Φ')
 plt.title('Gravitational Potential vs Affine Parameter')
 plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 # %%
-# 3D trajectory plot
-fig = plt.figure(figsize=(10, 8))
+fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection='3d')
+
 ax.plot(x, y, z, color='blue', label='Photon Path')
-ax.plot(x_straight, y_straight, z_straight, color='green', linestyle='--', label='Straight Path (No Lensing)')
-ax.scatter([0], [0], [0], color='red', s=100, label='Central Mass')
+ax.plot(x_straight, y_straight, z_straight, color='green', linestyle='--',
+        label='Straight Path (No Lensing)')
+ax.scatter([0], [0], [0], color='red', s=60, label='Central Mass')
+
 ax.set_xlabel('x (Mpc)')
 ax.set_ylabel('y (Mpc)')
 ax.set_zlabel('z (Mpc)')
-ax.set_xlim([-5, 5])
-ax.set_ylim([-2, 2])
-ax.set_zlim([-2, 2])
-ax.set_title('3D Photon Trajectory')
-ax.legend()
-ax.grid(True)
+ax.set_xlim([-6, 6])
+ax.set_ylim([-3, 3])
+ax.set_zlim([-3, 3])
+ax.set_box_aspect([1, 1, 1.2])  
+ax.set_title('3D Photon Trajectory', pad=12)
+ax.legend(fontsize=8, loc="upper left")
+
+# plt.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95)
 plt.show()
 
 # %%
 # Null condition plot
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.plot(l, np.abs(null_condition), 'rx', markersize=2, label='|ds²|')
 plt.yscale('log')
 plt.xlabel('Affine Parameter λ')
@@ -244,33 +260,36 @@ plt.ylabel('Absolute Null Condition |ds²|')
 plt.title('Null Geodesic Condition')
 plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 # %%
 # Redshift plot
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.plot(a, redshift, 'g-', linewidth=1, label='Redshift')
 plt.xlabel('Scale Factor a')
 plt.ylabel('Redshift')
 plt.title('Redshift vs Scale Factor')
 plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 # %%
 # Deflection angle vs λ
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.plot(l, deflection_vs_lambda, 'k-', label='Deflection Angle')
 plt.xlabel('Affine Parameter λ')
 plt.ylabel('Deflection Angle (degrees)')
 plt.title('Deflection Angle vs Affine Parameter')
 plt.legend()
 plt.grid(True)
+plt.tight_layout()
 plt.show()
 
 # %%
 # XY plane trajectory
-plt.figure(figsize=(8, 8))
+plt.figure(figsize=(6, 4))
 plt.plot(x, y, color='blue', label='Photon Path')
 plt.plot(x_straight, y_straight, color='green', linestyle='--', label='Straight Path (No Lensing)')
 plt.scatter([0], [0], color='red', s=100, label='Central Mass')
@@ -279,14 +298,15 @@ plt.ylabel('y (Mpc)')
 plt.title('Photon Trajectory in XY Plane')
 plt.legend()
 plt.grid(True)
-plt.axis('equal')
-plt.xlim(-5, 5)
-plt.ylim(-2, 2)
+# plt.axis('equal')
+plt.xlim(-6, 6)
+plt.ylim(-3, 3)
+plt.tight_layout()
 plt.show()
 
 # %%
 # XZ plane trajectory
-plt.figure(figsize=(8, 8))
+plt.figure(figsize=(6, 4))
 plt.plot(x, z, color='blue', label='Photon Path')
 plt.plot(x_straight, z_straight, color='green', linestyle='--', label='Straight Path (No Lensing)')
 plt.scatter([0], [0], color='red', s=100, label='Central Mass')
@@ -295,10 +315,12 @@ plt.ylabel('z (Mpc)')
 plt.title('Photon Trajectory in XZ Plane')
 plt.legend()
 plt.grid(True)
-plt.axis('equal')
-plt.xlim(-5, 5)
-plt.ylim(-2, 2)
+# plt.axis('equal')
+plt.xlim(-6, 6)
+plt.ylim(-3, 3)
+plt.tight_layout()
 plt.show()
+
 
 # %%
 # Diagnostics section
@@ -318,3 +340,5 @@ print(f"Minimum distance to origin: {np.min(np.sqrt(x**2 + y**2 + z**2)):.6f}")
 print(f"Deflection angle (degrees): {deflection_angle:.6f}")
 print(f"Integration steps taken: {sol.nfev}")
 print(f"Integration status: {sol.message}")
+
+
