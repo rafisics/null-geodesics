@@ -173,7 +173,6 @@ if np.any(null_condition < 0):
     neg_indices = np.where(null_condition < 0)[0]
     print(f"Warning: Negative null condition detected at {len(neg_indices)} points, e.g., λ={l[neg_indices[:5]]}")
 
-
 # %%
 # Energy and redshift
 E = ktau
@@ -202,6 +201,7 @@ plt.title('k^τ vs Affine Parameter')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig('plot_ktau.pdf')
 plt.show()
 
 # %%
@@ -214,6 +214,7 @@ plt.title('Scale Factor vs Affine Parameter')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig('plot_scale_factor.pdf')
 plt.show()
 
 # %%
@@ -226,28 +227,27 @@ plt.title('Gravitational Potential vs Affine Parameter')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig('plot_grav_potential.pdf')
 plt.show()
 
 # %%
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection='3d')
-
 ax.plot(x, y, z, color='blue', label='Photon Path')
 ax.plot(x_straight, y_straight, z_straight, color='green', linestyle='--',
         label='Straight Path (No Lensing)')
 ax.scatter([0], [0], [0], color='red', s=60, label='Central Mass')
-
 ax.set_xlabel('x (Mpc)')
 ax.set_ylabel('y (Mpc)')
-ax.set_zlabel('z (Mpc)')
+ax.set_zlabel('')  # Clear the default z-axis label
+ax.text2D(1, 0.6, 'z (Mpc)', transform=ax.transAxes, rotation=90, va='center', ha='left')
 ax.set_xlim([-6, 6])
 ax.set_ylim([-3, 3])
 ax.set_zlim([-3, 3])
-ax.set_box_aspect([1, 1, 1.2])  
+ax.set_box_aspect([1, 1, 1.2])
 ax.set_title('3D Photon Trajectory', pad=12)
 ax.legend(fontsize=8, loc="upper left")
-
-# plt.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95)
+plt.savefig('plot_3d_trajectory.pdf')
 plt.show()
 
 # %%
@@ -261,6 +261,7 @@ plt.title('Null Geodesic Condition')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig('plot_null_condition.pdf')
 plt.show()
 
 # %%
@@ -273,6 +274,7 @@ plt.title('Redshift vs Scale Factor')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig('plot_redshift.pdf')
 plt.show()
 
 # %%
@@ -285,6 +287,7 @@ plt.title('Deflection Angle vs Affine Parameter')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig('plot_deflection_angle.pdf')
 plt.show()
 
 # %%
@@ -298,10 +301,10 @@ plt.ylabel('y (Mpc)')
 plt.title('Photon Trajectory in XY Plane')
 plt.legend()
 plt.grid(True)
-# plt.axis('equal')
 plt.xlim(-6, 6)
 plt.ylim(-3, 3)
 plt.tight_layout()
+plt.savefig('plot_xy_trajectory.pdf')
 plt.show()
 
 # %%
@@ -315,12 +318,11 @@ plt.ylabel('z (Mpc)')
 plt.title('Photon Trajectory in XZ Plane')
 plt.legend()
 plt.grid(True)
-# plt.axis('equal')
 plt.xlim(-6, 6)
 plt.ylim(-3, 3)
 plt.tight_layout()
+plt.savefig('plot_xz_trajectory.pdf')
 plt.show()
-
 
 # %%
 # Diagnostics section
